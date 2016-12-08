@@ -161,7 +161,10 @@ crfstate(const vector<Token> &vt, int i)
     }
   }
 
-  for (size_t j = 0; j < str.size(); j++) {
+  if (str.size() > 0 && isupper(str[0]))
+      sample.add_feature("CTN_UPF");
+
+  for (size_t j = 1; j < str.size(); j++) {
     if (isupper(str[j])) {
       sample.add_feature("CTN_UPP");
       break;
