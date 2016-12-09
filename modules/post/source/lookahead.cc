@@ -13,9 +13,9 @@ using namespace std;
 
 bool USE_EDGE_TRIGRAMS = false;
 
-const static int PERCEPTRON_NITER = 7;
+//const static int PERCEPTRON_NITER = 7;
 //const static int PERCEPTRON_NITER = 20;
-//const static int PERCEPTRON_NITER = 10;
+const static int PERCEPTRON_NITER = 10;
 //const static int PERCEPTRON_NITER = 8;
 
 //int LOOKAHEAD_DEPTH = 1;

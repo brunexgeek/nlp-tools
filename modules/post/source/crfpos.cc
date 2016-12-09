@@ -17,6 +17,8 @@
 
 using namespace std;
 
+#define CALLED_THIS      //std::cout << __FUNCTION__ << std::endl;
+
 multimap<string, string> WNdic;
 
 //extern string normalize(const string & s);
@@ -28,13 +30,20 @@ extern int push_stop_watch();
 static string
 normalize(const string & s)
 {
-  string tmp(s);
-  for (size_t i = 0; i < tmp.size(); i++) {
-    tmp[i] = tolower(tmp[i]);
-    if (isdigit(tmp[i])) tmp[i] = '#';
-  }
-  //if (tmp[tmp.size()-1] == 's') tmp = tmp.substr(0, tmp.size()-1);
-  return tmp;
+    CALLED_THIS;
+    string tmp(s);
+    for (size_t i = 0; i < tmp.size(); i++) 
+    {
+        if (tmp[i] >= 65 && tmp[i] <= 90)
+          tmp[i] += 32;
+        else
+        if (tmp[i] >= 192 && tmp[i] <= 221)
+          tmp[i] += 32;
+        else
+        if (isdigit(tmp[i])) tmp[i] = '#';
+    }
+    //if (tmp[tmp.size()-1] == 's') tmp = tmp.substr(0, tmp.size()-1);
+    return tmp;
 }
 
 //--------------------------------------------------------------------
@@ -88,6 +97,7 @@ crfstate(const vector<Token> &vt, int i)
 static CRF_State
 crfstate(const vector<Token> &vt, int i)
 {
+  CALLED_THIS;
   CRF_State sample;
 
   string str = vt[i].str;
@@ -121,10 +131,11 @@ crfstate(const vector<Token> &vt, int i)
 
   sample.add_feature("W-2_" + prestr2);
   sample.add_feature("W+2_" + poststr2);
-
+#if 0
   sample.add_feature("W-10_" + prestr + "_" + str);
   sample.add_feature("W0+1_" + str  + "_" + poststr);
   sample.add_feature("W-1+1_" + prestr  + "_" + poststr);
+#endif
 
   //sample.add_feature("W-10+1_" + prestr  + "_" + str + "_" + poststr);
 
@@ -161,10 +172,10 @@ crfstate(const vector<Token> &vt, int i)
     }
   }
 
-  if (str.size() > 0 && isupper(str[0]))
-      sample.add_feature("CTN_UPF");
+  /*if (str.size() > 0 && isupper(str[0]))
+      sample.add_feature("CTN_UPF");*/
 
-  for (size_t j = 1; j < str.size(); j++) {
+  for (size_t j = 0; j < str.size(); j++) {
     if (isupper(str[j])) {
       sample.add_feature("CTN_UPP");
       break;
@@ -210,6 +221,7 @@ int
 crftrain(const CRF_Model::OptimizationMethod method,
 	 CRF_Model & m, const vector<Sentence> & vs, double gaussian, const bool use_l1)
 {
+  CALLED_THIS;
   if (method != CRF_Model::BFGS && use_l1) { cerr << "error: L1 regularization is currently not supported in this mode. Please use other optimziation methods." << endl; exit(1); }
 
   for (vector<Sentence>::const_iterator i = vs.begin(); i != vs.end(); i++) {
@@ -245,30 +257,6 @@ crf_decode_lookahead(Sentence & s, CRF_Model & m, vector< map<string, double> > 
   }
 }
 
-void
-crf_decode_forward_backward(Sentence & s, CRF_Model & m, vector< map<string, double> > & tagp)
-{
-  CRF_Sequence cs;
-  for (size_t j = 0; j < s.size(); j++) cs.add_state(crfstate(s, j));
-
-  m.decode_forward_backward(cs, tagp);
-  //  m.decode_viterbi(cs);
-
-  for (size_t k = 0; k < s.size(); k++) s[k].prd = cs.vs[k].label;
-}
-
-void
-crf_decode_nbest(Sentence & s, CRF_Model & m,
-		 vector<pair<double, vector<string> > > & nbest_seqs, int n)
-{
-  CRF_Sequence cs;
-  for (size_t j = 0; j < s.size(); j++) cs.add_state(crfstate(s, j));
-
-  m.decode_nbest(cs, nbest_seqs, n, 0);
-
-  for (size_t k = 0; k < s.size(); k++) s[k].prd = cs.vs[k].label;
-
-}
 
 
 
