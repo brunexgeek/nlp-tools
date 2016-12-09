@@ -16,7 +16,7 @@ extern bool USE_EDGE_TRIGRAMS;
 const string BOS_LABEL = "!BOS!";
 const string EOS_LABEL = "!EOS!";
 //const bool USE_BOS_EOS = true;  // need to fix load_from_file(). BOE and EOS should be put first.
-const bool USE_BOS_EOS = false;  
+const bool USE_BOS_EOS = false;
 
 const bool OUTPUT_MARGINAL_PROB = true;
 
@@ -28,12 +28,13 @@ static CRF_Model * pointer_to_working_object = NULL; // this is not a good solut
 
 #define CALLED_THIS      //std::cout << __FUNCTION__ << std::endl;
 
-CRF_Model::CRF_Model() 
+CRF_Model::CRF_Model()
 {
     CALLED_THIS;
     _nheldout = 0;
     _early_stopping_n = 0;
     _line_counter = 0;
+    lookaheadDepth = 2;
 
     if (USE_EDGE_TRIGRAMS) {
       p_edge_feature_id3  = (int*)malloc(sizeof(int) * MAX_LABEL_TYPES * MAX_LABEL_TYPES * MAX_LABEL_TYPES * MAX_LABEL_TYPES);
@@ -49,8 +50,8 @@ CRF_Model::CRF_Model()
     p_backward_pointer = (int*)malloc(sizeof(int) * MAX_LEN * MAX_LABEL_TYPES);
 
 }
- 
-CRF_Model::~CRF_Model() 
+
+CRF_Model::~CRF_Model()
 {
   CALLED_THIS;
     if (USE_EDGE_TRIGRAMS) {
@@ -92,7 +93,7 @@ CRF_Model::make_feature_bag(const int cutoff)
 #ifdef USE_HASH_MAP
   //  typedef __gnu_cxx::hash_map<mefeature_type, int> map_type;
   typedef std::tr1::unordered_map<mefeature_type, int> map_type;
-#else    
+#else
   typedef std::map<mefeature_type, int> map_type;
 #endif
 
@@ -118,7 +119,7 @@ CRF_Model::make_feature_bag(const int cutoff)
   }
 
   init_feature2mef();
-  
+
   return 0;
 }
 
@@ -173,8 +174,10 @@ CRF_Model::add_training_sample(const CRF_Sequence & seq)
 }
 
 int
-CRF_Model::train(const OptimizationMethod method, const int cutoff,
-		 const double sigma, const double widthfactor)
+CRF_Model::train(
+    const int cutoff,
+		const double sigma,
+    const double widthfactor )
 		 //		 const double Nsigma2, const double widthfactor)
 {
   CALLED_THIS;
@@ -196,20 +199,20 @@ CRF_Model::train(const OptimizationMethod method, const int cutoff,
   _label_bag.Put(BOS_LABEL);
   _label_bag.Put(EOS_LABEL);
   _num_classes = _label_bag.Size() - 2;
-  
+
   for (int i = 0; i < _nheldout; i++) {
     _heldout.push_back(_vs.back());
     _vs.pop_back();
   }
-  
+
   int total_len = 0;
   for (size_t i = 0; i < _vs.size(); i++) total_len += _vs[i].vs.size();
-  
+
   //  _sigma = sqrt((double)total_len / Nsigma2);
   //  if (Nsigma2 == 0) _sigma = 0;
   _sigma = sigma;
   _inequality_width = widthfactor / _vs.size();
-  
+
   if (cutoff > 0) cerr << "cutoff threshold = " << cutoff << endl;
   //  if (_sigma > 0) cerr << "Gaussian prior sigma = " << _sigma << endl;
     //    cerr << "N*sigma^2 = " << Nsigma2 << " sigma = " << _sigma << endl;
@@ -224,7 +227,7 @@ CRF_Model::train(const OptimizationMethod method, const int cutoff,
   cerr << "number of features = " << _fb.Size() << endl;
 
   cerr << "done" << endl;
-  
+
   _vl.resize(_fb.Size());
   _vl.assign(_vl.size(), 0.0);
 
@@ -273,13 +276,13 @@ CRF_Model::load_from_file(const string & filename, bool verbose)
     float lambda;
     string w = line.substr(t2+1);
     sscanf(w.c_str(), "%f", &lambda);
-      
+
     const int label = _label_bag.Put(classname);
     const int feature = _featurename_bag.Put(featurename);
     _fb.Put(ME_Feature(label, feature));
     _vl.push_back(lambda);
   }
-  
+
   // for zero-wight edges
   _label_bag.Put(BOS_LABEL);
   _label_bag.Put(EOS_LABEL);
@@ -359,16 +362,16 @@ CRF_Model::init_feature2mef()
     _feature2mef.push_back(vi);
   }
 #if 1
-    for (int i = 0; i < _label_bag.Size(); i++) 
+    for (int i = 0; i < _label_bag.Size(); i++)
     {
-        for (int j = 0; j < _label_bag.Size(); j++) 
+        for (int j = 0; j < _label_bag.Size(); j++)
         {
             const string & label1 = _label_bag.Str(j);
             const int l1 = _featurename_bag.Put("->\t" + label1);
             const int id = _fb.Put(ME_Feature(i, l1));
             edge_feature_id(i, j) = id;
 
-            for (int k = 0; k < _label_bag.Size(); k++) 
+            for (int k = 0; k < _label_bag.Size(); k++)
             {
                 const string & label2 = _label_bag.Str(k);
                 const int l2 = _featurename_bag.Put("->\t" + label1 + "\t->\t" + label2);
@@ -416,20 +419,16 @@ CRF_Model::init_feature2mef()
       }
     }
   }
- 
+
 
 }
 
 bool
 CRF_Model::save_to_file(const string & filename, const double th) const
 {
-  CALLED_THIS;
-  FILE * fp = fopen(filename.c_str(), "w");
-  if (!fp) {
-    cerr << "error: cannot open " << filename << "!" << endl;
-    return false;
-  }
-  cerr << "saving " << filename << "...";
+    CALLED_THIS;
+    FILE * fp = fopen(filename.c_str(), "wt");
+    if (!fp) return false;
 
   //  for (MiniStringBag::map_type::const_iterator i = _featurename_bag.begin();
   for (StrDic::const_Iterator i = _featurename_bag.begin();
@@ -447,7 +446,6 @@ CRF_Model::save_to_file(const string & filename, const double th) const
 
   fclose(fp);
 
-  cerr << "done" << endl;
-
   return true;
 }
+

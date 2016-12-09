@@ -11,7 +11,7 @@
 #include <sstream>
 #include <cmath>
 #include <set>
-//#include <ext/hash_map>
+#include <post/Trainer.hh>
 #include <post/crf.hh>
 #include <post/common.hh>
 
@@ -27,12 +27,17 @@ string base_form(const string & s, const string & pos);
 
 extern int push_stop_watch();
 
+
+namespace nlptools {
+namespace postagger {
+
+
 static string
 normalize(const string & s)
 {
     CALLED_THIS;
     string tmp(s);
-    for (size_t i = 0; i < tmp.size(); i++) 
+    for (size_t i = 0; i < tmp.size(); i++)
     {
         if (tmp[i] >= 65 && tmp[i] <= 90)
           tmp[i] += 32;
@@ -94,16 +99,15 @@ crfstate(const vector<Token> &vt, int i)
 */
 
 
-static CRF_State
-crfstate(const vector<Token> &vt, int i)
+void defaultFeatureGenerator(
+    const vector<Token> &vt,
+    int i,
+	  CRF_State &sample )
 {
-  CALLED_THIS;
-  CRF_State sample;
-
   string str = vt[i].str;
   //  string str = normalize(vt[i].str);
 
-  sample.label = vt[i].pos;
+  //sample.label = vt[i].pos;
 
   sample.add_feature("W0_" + vt[i].str);
 
@@ -212,56 +216,59 @@ crfstate(const vector<Token> &vt, int i)
   //      cout << *j << " ";
   //  }
   //  cout << endl;
-
-  return sample;
 }
 
 
-int
-crftrain(const CRF_Model::OptimizationMethod method,
-	 CRF_Model & m, const vector<Sentence> & vs, double gaussian, const bool use_l1)
+Trainer::Trainer(
+    FeatureCallback *callback ) : featureCallback(callback)
+{
+    if (featureCallback == NULL)
+        featureCallback = defaultFeatureGenerator;
+}
+
+
+Trainer::~Trainer()
+{
+
+}
+
+
+CRF_Model &Trainer::getModel()
+{
+    return model;
+}
+
+
+void Trainer::train(
+    const std::vector<Sentence> & vs,
+    double gaussian,
+    const bool use_l1 )
 {
   CALLED_THIS;
-  if (method != CRF_Model::BFGS && use_l1) { cerr << "error: L1 regularization is currently not supported in this mode. Please use other optimziation methods." << endl; exit(1); }
+  //if (method != CRF_Model::BFGS && use_l1) { cerr << "error: L1 regularization is currently not supported in this mode. Please use other optimziation methods." << endl; exit(1); }
 
   for (vector<Sentence>::const_iterator i = vs.begin(); i != vs.end(); i++) {
     const Sentence & s = *i;
     CRF_Sequence cs;
-    for (size_t j = 0; j < s.size(); j++) cs.add_state(crfstate(s, j));
-    m.add_training_sample(cs);
+    for (size_t j = 0; j < s.size(); j++)
+    {
+      CRF_State state;
+      state.label = s[j].pos;
+      featureCallback(s, j, state);
+      cs.add_state(state);
+    }
+    model.add_training_sample(cs);
   }
   //  m.set_heldout(50, 0);
 
-  if (use_l1) m.train(method, 0, 0, 1.0);
-  else        m.train(method, 0, gaussian);
+  if (use_l1)
+      model.train(0, 0, 1.0);
+  else
+      model.train(0, gaussian);
 
   //  m.save_to_file("model.crf");
-
-  return 0;
-}
-
-void
-crf_decode_lookahead(Sentence & s, CRF_Model & m, vector< map<string, double> > & tagp)
-{
-  CRF_Sequence cs;
-  for (size_t j = 0; j < s.size(); j++) cs.add_state(crfstate(s, j));
-
-  m.decode_lookahead(cs);
-
-  tagp.clear();
-  for (size_t k = 0; k < s.size(); k++) {
-    s[k].prd = cs.vs[k].label;
-    map<string, double> vp;
-    vp[s[k].prd] = 1.0;
-    tagp.push_back(vp);
-  }
 }
 
 
 
-
-
-/*
- * $Log$
- */
-
+}}

@@ -19,7 +19,7 @@ const static int PERCEPTRON_NITER = 10;
 //const static int PERCEPTRON_NITER = 8;
 
 //int LOOKAHEAD_DEPTH = 1;
-int LOOKAHEAD_DEPTH = 2;
+//int LOOKAHEAD_DEPTH = 2;
 //int LOOKAHEAD_DEPTH = 3;
 
 const double PERCEPTRON_MARGIN = 40;
@@ -170,13 +170,13 @@ int CRF_Model::update_weights_sub2(const Sequence & seq,
 {
   // gold-standard sequence
   vector<int> gold_seq;
-  const double gold_score = lookahead_search(seq, history, x, LOOKAHEAD_DEPTH, 0, 0, gold_seq, true);
+  const double gold_score = lookahead_search(seq, history, x, lookaheadDepth, 0, 0, gold_seq, true);
 
   //    cout << "gold = " << gold << " score = " << gold_score << endl;
   //        print_bestsq(gold_seq);
 
   vector<int> best_seq;
-  const double score = lookahead_search(seq, history, x, LOOKAHEAD_DEPTH, 0, 0, best_seq, false, &gold_seq);
+  const double score = lookahead_search(seq, history, x, lookaheadDepth, 0, 0, best_seq, false, &gold_seq);
 
   //       print_bestsq(best_seq);
 
@@ -186,9 +186,9 @@ int CRF_Model::update_weights_sub2(const Sequence & seq,
   map<int, double> vdiff;
 
   copy(gold_seq.begin(), gold_seq.end(), history.begin() + HV_OFFSET + x);
-  calc_diff( 1, seq, x, history, 0, LOOKAHEAD_DEPTH, vdiff);
+  calc_diff( 1, seq, x, history, 0, lookaheadDepth, vdiff);
   copy(best_seq.begin(), best_seq.end(), history.begin() + HV_OFFSET + x);
-  calc_diff(-1, seq, x, history, 0, LOOKAHEAD_DEPTH, vdiff);
+  calc_diff(-1, seq, x, history, 0, lookaheadDepth, vdiff);
 
 
   for (map<int, double>::const_iterator j = vdiff.begin(); j != vdiff.end(); j++) {
@@ -255,9 +255,9 @@ CRF_Model::heldout_lookahead_error()
 int
 CRF_Model::perform_LookaheadTraining()
 {
-  cerr << "lookahead depth = " << LOOKAHEAD_DEPTH << endl;
-  cerr << "perceptron margin = " << PERCEPTRON_MARGIN << endl;
-  cerr << "perceptron niter = " << PERCEPTRON_NITER << endl;
+  cerr << "lookahead depth = " << lookaheadDepth << endl;
+  cerr << "perceptron margin = " << lookaheadDepth << endl;
+  cerr << "perceptron niter = " << lookaheadDepth << endl;
 
   const int dim = _fb.Size();
 
@@ -316,7 +316,9 @@ CRF_Model::perform_LookaheadTraining()
 }
 
 
-int CRF_Model::decode_lookahead_sentence(const Sequence & seq, vector<int> & vs)
+int CRF_Model::decode_lookahead_sentence(
+    const Sequence & seq,
+    vector<int> & vs )
 {
   //    lookahead_initialize_edge_weights();  // to be removed
   lookahead_initialize_state_weights(seq);
@@ -329,7 +331,7 @@ int CRF_Model::decode_lookahead_sentence(const Sequence & seq, vector<int> & vs)
   for (int x = 0; x < len; x++) {
 
     vector<int> bestsq;
-    const double score = lookahead_search(seq, history, x, LOOKAHEAD_DEPTH, 0, 0, bestsq);
+    const double score = lookahead_search(seq, history, x, lookaheadDepth, 0, 0, bestsq);
 
     vs[x] = bestsq.front();
     history[HV_OFFSET + x] = vs[x];

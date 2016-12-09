@@ -21,6 +21,7 @@ struct Token
   Token(std::string s, const int b, const int e) : str(s), begin(b), end(e) {}
 };
 
+
 typedef std::vector<Token> Sentence;
 
 
@@ -36,8 +37,8 @@ public:
       "-LSB-", "[",
       "-RSB-", "]",
       "-LCB-", "{",
-      "-RCB-", "}", 
-      "***", "***", 
+      "-RCB-", "}",
+      "***", "***",
     };
 
     for (int i = 0;; i+=2) {
@@ -57,7 +58,6 @@ public:
     return i->second;
   }
 };
-
 
 
 #endif

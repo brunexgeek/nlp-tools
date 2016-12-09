@@ -9,13 +9,13 @@
 // in the following paper.
 //
 // N. Askitis and J. Zobel, Cache-conscious Collision Resolution in
-// String Hash Tables, Proc. of String Processing and Information 
+// String Hash Tables, Proc. of String Processing and Information
 // Retrieval Symp., Springer-Verlag, pp. 92--104, 2006.
 
 class StrDic
 {
 public:
-  
+
   //enum { LOAD_FACTOR = 1 };  // expand the hash table when num_terms == table_size.
   enum { LOAD_FACTOR = 2 };
   //  enum { LOAD_FACTOR = 4 };  // a bit slower, but more memory efficient.
@@ -28,7 +28,7 @@ public:
   }
   int Put(const std::string & s) {
     assert(s.size() > 0 && s.size() < 256);
-    return Insert(s, _num_terms);
+    return Insert(s, (int)_num_terms);
   }
   int Id(const std::string & s) const {
     assert(s.size() > 0 && s.size() < 256);
@@ -42,13 +42,13 @@ public:
   }
   void Clear(const int n = 1) {
     for (size_t i = 0; i < _v.size(); i++) free(_v[i]);
-    _v.resize(n); 
+    _v.resize(n);
     for (size_t i = 0; i < _v.size(); i++) _v[i] = NULL;
     _num_terms = 0;
     _min_idx = _v.size();
     _max_idx = 0;
   }
-  size_t Size() const { 
+  size_t Size() const {
     return _num_terms;
   }
 
@@ -57,7 +57,7 @@ public:
     const StrDic *obj;
     int idx;
     const unsigned char *base;
-    const_Iterator(const StrDic *o, int i, const unsigned char *b) : 
+    const_Iterator(const StrDic *o, int i, const unsigned char *b) :
       obj(o), idx(i), base(b) {}
     const_Iterator & operator++(int) {
       base += *base + EXTRA_DATA_SIZE;
@@ -145,7 +145,7 @@ private:
     unsigned int current_size = 0;
     if (base != NULL) {
       base = ScanStr(base, s);
-      if (*base) return GetInt(base); /////////// doesn't store the value 
+      if (*base) return GetInt(base); /////////// doesn't store the value
       current_size = base - _v[idx];
     }
     const size_t new_size = current_size + s.size() + EXTRA_DATA_SIZE + 1;
@@ -186,13 +186,13 @@ private:
   }
 };
 
-inline bool operator !=(const StrDic::const_Iterator & x, 
-			const StrDic::const_Iterator & y) 
+inline bool operator !=(const StrDic::const_Iterator & x,
+			const StrDic::const_Iterator & y)
 {
   if (x.idx == y.idx && x.base == y.base) return false;
   return true;
 }
-  
-  
+
+
 
 #endif

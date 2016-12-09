@@ -12,8 +12,7 @@
 #include <cfloat>
 #include <sstream>
 //#include "maxent.h"
-#include <post/crf.hh>
-#include <post/common.hh>
+#include <post/Predictor.hh>
 #include <sys/time.h>
 
 using namespace std;
@@ -63,27 +62,27 @@ int push_stop_watch()
 
 void print_help()
 {
-  cout << "Lookahead POS Tagger, a trainable part-of-speech tagger." << endl;
-  cout << "Usage: lapos [OPTION]... [FILE]" << endl;
-  cout << "Annotate each word in FILE with a part-of-speech tag." << endl;
-  cout << "By default, the tagger assumes that FILE contains one sentence per line" << endl;
-  cout << "and the words are tokenized with white spaces." << endl;
-  //  cout << "Try -t and -s options if you want the tagger to process raw text." << endl;
-  cout << "Use -t option if you want to process untokenized sentences." << endl;
-  cout << endl;
-  cout << "Mandatory arguments to long options are mandatory for short options too." << endl;
-  cout << "  -m, --model=DIR        specify the directory containing the models" << endl;
-  cout << "  -t, --tokenize         perform tokenization" << endl;
-  //  cout << "  -s, --split-sentence   perform sentence-splitting" << endl;
-  cout << "  -s, --standoff         output in stand-off format" << endl;
-  cout << "  -u, --uima             output in UIMA format" << endl;
-  cout << "  -e, --enju             output in Enju format" << endl;
-  cout << "  -h, --help             display this help and exit" << endl;
-  cout << endl;
-  cout << "With no FILE, or when FILE is -, read standard input." << endl;
-  cout << endl;
-  cout << "Report bugs to <tsuruoka@gmail.com>" << endl;
-  exit(0);
+    cout << "Lookahead POS Tagger, a trainable part-of-speech tagger." << endl;
+    cout << "Usage: tool_predict [OPTION]... [FILE]" << endl;
+    cout << "Annotate each word in FILE with a part-of-speech tag." << endl;
+    cout << "By default, the tagger assumes that FILE contains one sentence per line" << endl;
+    cout << "and the words are tokenized with white spaces." << endl;
+    //  cout << "Try -t and -s options if you want the tagger to process raw text." << endl;
+    cout << "Use -t option if you want to process untokenized sentences." << endl;
+    cout << endl;
+    cout << "Mandatory arguments to long options are mandatory for short options too." << endl;
+    cout << "  -m, --model=DIR        specify the directory containing the models" << endl;
+    cout << "  -t, --tokenize         perform tokenization" << endl;
+    //  cout << "  -s, --split-sentence   perform sentence-splitting" << endl;
+    cout << "  -s, --standoff         output in stand-off format" << endl;
+    cout << "  -u, --uima             output in UIMA format" << endl;
+    cout << "  -e, --enju             output in Enju format" << endl;
+    cout << "  -h, --help             display this help and exit" << endl;
+    cout << endl;
+    cout << "With no FILE, or when FILE is -, read standard input." << endl;
+    cout << endl;
+    cout << "To report bugs, open an issue at <https://github.com/brunexgeek/nlp-tools>" << endl;
+    exit(0);
 }
 
 void print_version()
@@ -103,7 +102,7 @@ struct TagProb
 int main(int argc, char** argv)
 {
   string WORDNET_DIR = "";
-  
+
   string ifilename;
 
   for (int i = 1; i < argc; i++) {
@@ -122,13 +121,13 @@ int main(int argc, char** argv)
       MODEL_DIR = v.substr(8);
       continue;
     }
-    if (v == "-t" || v == "--tokenize") { 
-      PERFORM_TOKENIZATION = true; 
-      continue; 
+    if (v == "-t" || v == "--tokenize") {
+      PERFORM_TOKENIZATION = true;
+      continue;
     }
-    if (v == "-s" || v == "--standoff") { 
+    if (v == "-s" || v == "--standoff") {
       STANDOFF = true;
-      continue; 
+      continue;
     }
     if (v == "-u" || v == "--uima") {
       UIMA = true;
@@ -217,7 +216,8 @@ int main(int argc, char** argv)
     // tag the words
     vector< map<string, double> > tagp0, tagp1;
     //    crf_decode_forward_backward(vt, crfm, tagp0);
-    crf_decode_lookahead(vt, crfm, tagp0);
+    nlptools::postagger::Predictor predictor(crfm);
+    predictor.predict(vt, tagp0);
     if (false) {
       //      ef_decode_beam(vt, vme, tagp1);
       assert(0); exit(1);

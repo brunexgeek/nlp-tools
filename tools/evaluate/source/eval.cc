@@ -61,7 +61,7 @@ void evaluate(const vector<Sentence> & vs)
 void read_pos(const string & filename, vector<Sentence> & vs)
 {
   static ParenConverter paren_converter;
- 
+
   ifstream ifile(filename.c_str());
 
   string line;
@@ -102,7 +102,8 @@ void read_pos(const string & filename, vector<Sentence> & vs)
 int main(int argc, char** argv)
 {
   if (argc != 3 && argc != 4) {
-    cerr << "Usage: lapos-eval GOLD_STANDARD TAGGED [TRAIN]" << endl;
+    cerr << "Usage: tool_evaluate GOLD_TEST PREDICTED_TEST [GOLD_TRAINING]" << endl << endl;
+    cout << "To report bugs, open an issue at <https://github.com/brunexgeek/nlp-tools>" << endl;
     exit(1);
   }
   const string gsfile = argv[1];
