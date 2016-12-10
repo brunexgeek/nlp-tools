@@ -81,7 +81,7 @@ public:
     }
   };
   const_Iterator begin() const {
-    return const_Iterator(this, _min_idx, _v[_min_idx]);
+    return const_Iterator(this, (int)_min_idx, _v[_min_idx]);
   }
   const_Iterator end() const {
     return const_Iterator(this, -1, NULL);
@@ -142,7 +142,7 @@ private:
     assert(s.size() < 256);
     const size_t idx = hash_func(s) % _v.size();
     const unsigned char *base = _v[idx];
-    unsigned int current_size = 0;
+    size_t current_size = 0;
     if (base != NULL) {
       base = ScanStr(base, s);
       if (*base) return GetInt(base); /////////// doesn't store the value
@@ -162,10 +162,10 @@ private:
     //    if (_num_terms > _v.size() * 900 / 1024) this->Expand();
     if (_num_terms > _v.size() * LOAD_FACTOR) this->Expand();
 
-    return _num_terms - 1;
+    return (int)_num_terms - 1;
   }
   void Expand() {
-    StrDic c(_v.size() * 2);
+    StrDic c( (int)_v.size() * 2);
     //    StrDic c(_v.size() * 3 / 2 + 1);
 
     for (size_t i = _min_idx; i <= _max_idx; i++) {

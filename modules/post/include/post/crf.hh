@@ -147,7 +147,7 @@ private:
     int Put(const ME_Feature & i) {
       map_type::const_iterator j = mef2id.find(i.body());
       if (j == mef2id.end()) {
-        const int id = id2mef.size();
+        const int id = (int) id2mef.size();
         id2mef.push_back(i);
         mef2id[i.body()] = id;
         return id;
@@ -166,7 +166,7 @@ private:
       return id2mef[id];
     }
     int Size() const {
-      return id2mef.size();
+      return (int) id2mef.size();
     }
     void Clear() {
       mef2id.clear();
@@ -180,7 +180,7 @@ private:
       assert(sizeof(int) == 4 && sizeof(char) == 1);
       const int* p = reinterpret_cast<const int*>(s.c_str());
       size_t v = 0;
-      int n = s.size() / 4;
+      int n = (int) s.size() / 4;
       for (int i = 0; i < n; i++, p++) {
         //      v ^= *p;
 	v ^= *p << (4 * (i % 2)); // note) 0 <= char < 128  // bug??
@@ -232,7 +232,7 @@ private:
     int Put(const std::string & i) {
       map_type::const_iterator j = str2id.find(i);
       if (j == str2id.end()) {
-        int id = id2str.size();
+        int id = (int) id2str.size();
         id2str.push_back(i);
         str2id[i] = id;
         return id;
@@ -243,7 +243,7 @@ private:
       assert(id >= 0 && id < (int)id2str.size());
       return id2str[id];
     }
-    int Size() const { return id2str.size(); }
+    int Size() const { return (int) id2str.size(); }
     void Clear() {
       str2id.clear();
       id2str.clear();

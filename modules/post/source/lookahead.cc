@@ -26,7 +26,7 @@ const double PERCEPTRON_MARGIN = 40;
 //const double PERCEPTRON_MARGIN = 0;
 //const double PERCEPTRON_MARGIN = 100;
 
-const static int HV_OFFSET = 3;
+const static int HV_OFFSET = 3; // Should be equals to the maximum lookahead depth possible
 
 
 void CRF_Model::lookahead_initialize_state_weights(const Sequence & seq)
@@ -154,14 +154,6 @@ void CRF_Model::calc_diff(const double val,
   calc_diff(val, seq, start, history, depth + 1, max_depth, diff);
 }
 
-static void print_bestsq(const vector<int> & bestsq)
-{
-  for (vector<int>::const_iterator i = bestsq.begin(); i != bestsq.end(); i++) {
-    cout << *i << " ";
-  }
-  cout << endl;
-
-}
 
 int CRF_Model::update_weights_sub2(const Sequence & seq,
 				   vector<int> & history,
@@ -232,7 +224,7 @@ int CRF_Model::lookaheadtrain_sentence(const Sequence & seq, int & t, vector<dou
 double
 CRF_Model::heldout_lookahead_error()
 {
-  int nerrors = 0, total_len = 0;
+  size_t nerrors = 0, total_len = 0;
 
   //    lookahead_initialize_edge_weights();  // to be removed
   for (std::vector<Sequence>::const_iterator i = _heldout.begin(); i != _heldout.end(); i++) {
@@ -256,8 +248,8 @@ int
 CRF_Model::perform_LookaheadTraining()
 {
   cerr << "lookahead depth = " << lookaheadDepth << endl;
-  cerr << "perceptron margin = " << lookaheadDepth << endl;
-  cerr << "perceptron niter = " << lookaheadDepth << endl;
+  cerr << "perceptron margin = " << PERCEPTRON_MARGIN << endl;
+  cerr << "perceptron niter = " << PERCEPTRON_NITER << endl;
 
   const int dim = _fb.Size();
 
@@ -323,7 +315,7 @@ int CRF_Model::decode_lookahead_sentence(
   //    lookahead_initialize_edge_weights();  // to be removed
   lookahead_initialize_state_weights(seq);
 
-  const int len = seq.vs.size();
+  const int len = (int) seq.vs.size();
 
   vector<int> history(len + HV_OFFSET, -1);
   fill(history.begin(), history.begin() + HV_OFFSET, _num_classes); // BOS

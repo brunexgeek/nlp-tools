@@ -24,8 +24,6 @@ const bool OUTPUT_MARGINAL_PROB = true;
 
 extern int push_stop_watch();
 
-static CRF_Model * pointer_to_working_object = NULL; // this is not a good solution...
-
 #define CALLED_THIS      //std::cout << __FUNCTION__ << std::endl;
 
 CRF_Model::CRF_Model()
@@ -126,7 +124,7 @@ CRF_Model::make_feature_bag(const int cutoff)
 
 inline bool contain_space(const string & s)
 {
-  for (int i = 0; i < s.size(); i++) {
+  for (size_t i = 0; i < s.size(); i++) {
     if (isspace(s[i])) return true;
   }
   return false;
@@ -205,13 +203,13 @@ CRF_Model::train(
     _vs.pop_back();
   }
 
-  int total_len = 0;
+  size_t total_len = 0;
   for (size_t i = 0; i < _vs.size(); i++) total_len += _vs[i].vs.size();
 
   //  _sigma = sqrt((double)total_len / Nsigma2);
   //  if (Nsigma2 == 0) _sigma = 0;
   _sigma = sigma;
-  _inequality_width = widthfactor / _vs.size();
+  _inequality_width = widthfactor / (double) _vs.size();
 
   if (cutoff > 0) cerr << "cutoff threshold = " << cutoff << endl;
   //  if (_sigma > 0) cerr << "Gaussian prior sigma = " << _sigma << endl;
@@ -353,10 +351,10 @@ CRF_Model::init_feature2mef()
   // fills '_feature2mef' with the ID for all existing features
   // in the bag
   _feature2mef.clear();
-  for (int i = 0; i < _featurename_bag.Size(); i++) {
+  for (size_t i = 0; i < _featurename_bag.Size(); i++) {
     vector<int> vi;
-    for (int k = 0; k < _num_classes; k++) {
-      int id = _fb.Id(ME_Feature(k, i));
+    for (size_t k = 0; k < (size_t) _num_classes; k++) {
+      int id = _fb.Id(ME_Feature((int)k, (int)i));
       if (id >= 0) vi.push_back(id);
     }
     _feature2mef.push_back(vi);
