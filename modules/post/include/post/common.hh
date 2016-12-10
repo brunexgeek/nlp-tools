@@ -22,7 +22,59 @@ struct Token
 };
 
 
-typedef std::vector<Token> Sentence;
+class Sentence
+{
+    public:
+        Sentence()
+        {
+        }
+
+        ~Sentence()
+        {
+        }
+
+        Token &operator [](
+            size_t index )
+        {
+            return content[index];
+        }
+
+        const Token &operator [](
+            size_t index ) const
+        {
+            return content[index];
+        }
+
+        size_t size() const
+        {
+            return content.size();
+        }
+
+        void push_back(
+            const Token &item )
+        {
+            content.push_back(item);
+        }
+
+        void pop_back()
+        {
+            content.pop_back();
+        }
+
+        std::vector<Token>::iterator begin()
+        {
+            return content.begin();
+        }
+
+        std::vector<Token>::iterator end()
+        {
+            return content.end();
+        }
+
+    private:
+        std::vector<Token> content;
+};
+
 
 
 class ParenConverter

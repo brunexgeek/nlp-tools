@@ -100,7 +100,7 @@ crfstate(const vector<Token> &vt, int i)
 
 
 void defaultFeatureGenerator(
-    const vector<Token> &vt,
+    const Sentence &vt,
     int i,
 	  CRF_State &sample )
 {

@@ -75,10 +75,10 @@ tokenize(const string & s1, vector<string> & lt)
     break;
   }
   if (s[pos] == '.' && !(pos > 0 && s[pos-1] == '.')) s.replace(pos, 1, " .");
-  
+
   replace(s, "?", " ? ");
   replace(s, "!", " ! ");
-    
+
   replace(s, "[", " [ ");
   replace(s, "]", " ] ");
   replace(s, "(", " ( ");
@@ -92,7 +92,7 @@ tokenize(const string & s1, vector<string> & lt)
 
   s.replace(string::size_type(0), 0, " ");
   s.replace(s.size(), 0, " ");
-  
+
   replace(s, "''", " '' ");
   replace(s, "\"", " '' ");
 
@@ -167,7 +167,7 @@ replace(string & s, const string & s1, const string & s2, const char skip, bool 
 }
 
 void
-tokenize(const string & s, vector<Token> & vt, const bool use_upenn_tokenizer)
+tokenize(const string & s, Sentence & vt, const bool use_upenn_tokenizer)
 {
   vector<string> vs;
   if (use_upenn_tokenizer) {

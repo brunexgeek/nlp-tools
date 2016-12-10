@@ -15,6 +15,7 @@
 #include <cassert>
 #include <cstdio>
 #include <post/strdic.hh>
+#include <post/common.hh>
 
 #define USE_HASH_MAP  // if you encounter errors with hash, try commenting out this line. (the program will be a bit slower, though)
 #ifdef USE_HASH_MAP
@@ -413,7 +414,7 @@ class Token;
 
 
 typedef void FeatureCallback(
-    const std::vector<Token> &tokens,
+    const Sentence &sentence,
     int i,
     CRF_State &current );
 
