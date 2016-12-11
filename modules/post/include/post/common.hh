@@ -12,9 +12,9 @@
 struct Token
 {
   //  std::string org_str;
-  std::string str;
-  std::string pos;
-  std::string prd;
+  std::string str; // token string
+  std::string pos; // token tag (golden)
+  std::string prd; // token tag (predicted)
   int begin;
   int end;
   Token(std::string s, std::string p) : str(s), pos(p) {}
@@ -25,6 +25,9 @@ struct Token
 class Sentence
 {
     public:
+        typedef std::vector<Token>::iterator iterator;
+        typedef std::vector<Token>::const_iterator const_iterator;
+
         Sentence()
         {
         }
@@ -61,12 +64,12 @@ class Sentence
             content.pop_back();
         }
 
-        std::vector<Token>::iterator begin()
+        iterator begin()
         {
             return content.begin();
         }
 
-        std::vector<Token>::iterator end()
+        iterator end()
         {
             return content.end();
         }

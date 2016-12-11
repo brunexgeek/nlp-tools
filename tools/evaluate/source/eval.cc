@@ -50,7 +50,7 @@ void evaluate(const vector<Sentence> & vs)
     }
     if (all_correct) ncorrect_sen++;
   }
-  fprintf(stderr, "sentence  %7d / %7d = %f\n", ncorrect_sen, (int)vs.size(), (double)ncorrect_sen / vs.size());
+  fprintf(stderr, "sentence  %7d / %7d = %f\n", ncorrect_sen, (int)vs.size(), ncorrect_sen / (double)vs.size());
   fprintf(stderr, "token     %7d / %7d = %f\n", ncorrect, ntotal, (double)ncorrect / ntotal);
   if (known_words.size() > 0) {
     fprintf(stderr, "  known   %7d / %7d = %f\n", ncorrect_known, ntotal_known, (double)ncorrect_known / ntotal_known);

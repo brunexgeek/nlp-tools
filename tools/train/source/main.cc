@@ -12,6 +12,7 @@
 #include <sstream>
 //#include "maxent.h"
 #include <post/Trainer.hh>
+#include <post/Corpus.hh>
 
 
 using namespace std;
@@ -54,24 +55,33 @@ void read_tagged(istream * ifile, vector<Sentence> & vs)
   //  exit(0);
 }
 
-void print_help()
+void main_usage()
 {
-	cout << "Usage: tool_train -m <model> [ -i <training-set> ]" << endl;
-	cout << endl;
-	cout << "Create a model from the given training set." << endl;
-	cout << endl;
-	cout << "The input must be one-sentence-per-line." << endl;
-	cout << "The format for each line is: WORD1/TAG1 WORD2/TAG2 WORD3/TAG3 ..." << endl;
-	cout << endl;
-	cout << "  -m          Path where the generated model wil be saved." << endl;
-	cout << "  -i          Path to the training set." << endl;
-	cout << "  -d          Specifies the lookahead depth (1-3). The default is 2." << endl;
-	cout << "  -h          Display this help and exit" << endl;
-	cout << endl;
-	cout << "If no training set file name was given, the program read from standard input." << endl;
-	cout << endl;
-	cout << "To report bugs, open an issue at <https://github.com/brunexgeek/nlp-tools>" << endl;
+	std::cerr << "Usage: tool_train -m <model> [ -i <training-set> ]" << endl;
+	std::cerr << endl;
+	std::cerr << "Create a model from the given training set." << endl;
+	std::cerr << endl;
+	std::cerr << "The input must be one-sentence-per-line." << endl;
+	std::cerr << "The format for each line is: WORD1/TAG1 WORD2/TAG2 WORD3/TAG3 ..." << endl;
+	std::cerr << endl;
+	std::cerr << "  -m          Path where the generated model wil be saved." << endl;
+	std::cerr << "  -i          Path to the training set." << endl;
+	std::cerr << "  -d          Specifies the lookahead depth (1-3). The default is 2." << endl;
+	std::cerr << "  -h          Display this help and exit" << endl;
+	std::cerr << endl;
+	std::cerr << "If no training set file name was given, the program read from standard input." << endl;
+	std::cerr << endl;
+	std::cerr << "To report bugs, open an issue at <https://github.com/brunexgeek/nlp-tools>" << endl;
 }
+
+void main_error(
+	const std::string &message )
+{
+	std::cerr << "Error: " << message << std::endl << std::endl;
+	main_usage();
+	exit(1);
+}
+
 
 int main(int argc, char** argv)
 {
@@ -112,62 +122,37 @@ int main(int argc, char** argv)
 		else
 		if (current == "-h" || current == "--help")
 		{
-			print_help();
+			main_usage();
 			exit(0);
 		}
 		else
 		{
-			cerr << "error: unknown option " << current << endl;
-			cerr << "Try `stepp-learn --help' for more information." << endl;
+			main_error( "unknown option '" + current + "'");
 			exit(1);
 		}
 	}
 
-	if (modelFileName.empty())
-	{
-		print_help();
-		exit(0);
-	}
+	if (modelFileName.empty()) main_error("missing model file name");
 
-	vector<Sentence> trains;
-
-	istream *is(&std::cin);
-	ifstream ifile;
+	nlptools::postagger::Corpus corpus;
 	if (!samplesFileName.empty())
-	{
-		ifile.open(samplesFileName.c_str());
-		if (!ifile)
-		{
-			cerr << "error: cannot open " << samplesFileName << endl;
-			exit(1);
-		}
-		is = &ifile;
-	}
+		corpus.load(samplesFileName);
+	else
+		corpus.load(std::cin);
 
-	read_tagged(is, trains);
-
-	if (trains.size() == 0)
+	if (corpus.size() == 0)
 	{
 		if (!samplesFileName.empty())
-		{
-			cerr << "error: cannot read \"" << samplesFileName << "\"" << endl; exit(1);
-		}
-		cerr << "error: no training data." << endl;
-		exit(1);
+			main_error("cannot read '" + samplesFileName + "'");
+		else
+			main_error("no training data.");
 	}
 
-	//  if (!CRF_ONLY) eftrain(trains, MODEL_DIR, use_l1_regularization);
-
 	nlptools::postagger::Trainer trainer;
-	//CRF_Model crfm;
-	//      crfm.set_heldout(10000);
-	trainer.train(/*CRF_Model::PERCEPTRON, crfm,*/ trains, 0, false);
+	trainer.train(corpus, 0, false);
+
 	cerr << "Saving model to '" << modelFileName << "' ...";
 	trainer.getModel().save_to_file(modelFileName, 0.001);
 	cerr << "done" << endl;
 }
-
-/*
- * $Log$
- */
 
