@@ -74,6 +74,16 @@ class Sentence
             return content.end();
         }
 
+        const_iterator begin() const
+        {
+            return content.begin();
+        }
+
+        const_iterator end() const
+        {
+            return content.end();
+        }
+
     private:
         std::vector<Token> content;
 };

@@ -31,9 +31,6 @@ const double PROB_OUTPUT_THRESHOLD = 0.001; // suppress output of tags with a ve
 void
 tokenize(const string & s, Sentence & vt, const bool use_upenn_tokenizer);
 
-void
-crf_decode_lookahead(Sentence & s, CRF_Model & m, vector< map<string, double> > & tagp);
-
 void read_WordNet(const string & wordnetdir);
 
 

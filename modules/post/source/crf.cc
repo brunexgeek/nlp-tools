@@ -70,8 +70,8 @@ CRF_Model::~CRF_Model()
 void CRF_Model::initialize_edge_weights()
 {
   CALLED_THIS;
-  for (int i = 0; i < _label_bag.Size(); i++) {
-    for (int j = 0; j < _label_bag.Size(); j++) {
+  for (int i = 0; i < _label_bag.size(); i++) {
+    for (int j = 0; j < _label_bag.size(); j++) {
       const int id = edge_feature_id(i, j);
       //      if (id < 0) { edge_weight[i][j] = 1; continue; }
       assert(id >= 0);
@@ -111,7 +111,7 @@ CRF_Model::make_feature_bag(const int cutoff)
       for (vector<int>::const_iterator j = i->positive_features.begin(); j != i->positive_features.end(); j++) {
 	const ME_Feature feature(i->label, *j);
 	if (cutoff > 0 && count[feature.body()] <= cutoff) continue;
-	_fb.Put(feature);
+	_fb.put(feature);
       }
     }
   }
@@ -134,18 +134,18 @@ void
 CRF_Model::add_training_sample(const CRF_Sequence & seq)
 {
   CALLED_THIS;
-  if (seq.vs.size() >= MAX_LEN) {
+  if (seq.size() >= MAX_LEN) {
     cerr << "error: sequence is too long.";
     exit(1);
   }
-  if (seq.vs.size() == 0) {
+  if (seq.size() == 0) {
     cerr << "warning: empty sentence" << endl;
     return;
   }
-  assert(seq.vs.size() > 0);
+  assert(seq.size() > 0);
 
   Sequence s1;
-  for (vector<CRF_State>::const_iterator i = seq.vs.begin(); i != seq.vs.end(); i++) {
+  for (CRF_Sequence::const_iterator i = seq.begin(); i != seq.end(); i++) {
     if (i->label == BOS_LABEL || i->label == EOS_LABEL) {
       cerr << "error: the label name \"" << i->label << "\" is reserved. Use a different name.";
       exit(1);
@@ -196,7 +196,7 @@ CRF_Model::train(
 
   _label_bag.Put(BOS_LABEL);
   _label_bag.Put(EOS_LABEL);
-  _num_classes = _label_bag.Size() - 2;
+  _num_classes = _label_bag.size() - 2;
 
   for (int i = 0; i < _nheldout; i++) {
     _heldout.push_back(_vs.back());
@@ -222,11 +222,11 @@ CRF_Model::train(
   cerr << "done" << endl;
   cerr << "number of state types = " << _num_classes << endl;
   cerr << "number of samples = " << _vs.size() << endl;
-  cerr << "number of features = " << _fb.Size() << endl;
+  cerr << "number of features = " << _fb.size() << endl;
 
   cerr << "done" << endl;
 
-  _vl.resize(_fb.Size());
+  _vl.resize(_fb.size());
   _vl.assign(_vl.size(), 0.0);
 
   perform_LookaheadTraining();
@@ -234,7 +234,7 @@ CRF_Model::train(
 
   if (_inequality_width > 0) {
     int sum = 0;
-    for (int i = 0; i < _fb.Size(); i++) {
+    for (int i = 0; i < _fb.size(); i++) {
       if (_vl[i] != 0) sum++;
     }
     cerr << "number of active features = " << sum << endl;
@@ -261,9 +261,9 @@ CRF_Model::load_from_file(const string & filename, bool verbose)
   }
 
   _vl.clear();
-  _label_bag.Clear();
+  _label_bag.clear();
   _featurename_bag.Clear();
-  _fb.Clear();
+  _fb.clear();
   char buf[1024];
   while(fgets(buf, 1024, fp)) {
     string line(buf);
@@ -277,50 +277,50 @@ CRF_Model::load_from_file(const string & filename, bool verbose)
 
     const int label = _label_bag.Put(classname);
     const int feature = _featurename_bag.Put(featurename);
-    _fb.Put(ME_Feature(label, feature));
+    _fb.put(ME_Feature(label, feature));
     _vl.push_back(lambda);
   }
 
   // for zero-wight edges
   _label_bag.Put(BOS_LABEL);
   _label_bag.Put(EOS_LABEL);
-  for (int i = 0; i < _label_bag.Size(); i++) {
-    for (int j = 0; j < _label_bag.Size(); j++) {
+  for (int i = 0; i < _label_bag.size(); i++) {
+    for (int j = 0; j < _label_bag.size(); j++) {
       const string & label1 = _label_bag.Str(j);
       const int l1 = _featurename_bag.Put("->\t" + label1);
-      const int id = _fb.Id(ME_Feature(i, l1));
+      const int id = _fb.getId(ME_Feature(i, l1));
       if (id < 0) {
-	_fb.Put(ME_Feature(i, l1));
+	_fb.put(ME_Feature(i, l1));
 	_vl.push_back(0);
       }
     }
   }
-  for (int i = 0; i < _label_bag.Size(); i++) {
-    for (int j = 0; j < _label_bag.Size(); j++) {
-      for (int k = 0; k < _label_bag.Size(); k++) {
+  for (int i = 0; i < _label_bag.size(); i++) {
+    for (int j = 0; j < _label_bag.size(); j++) {
+      for (int k = 0; k < _label_bag.size(); k++) {
 	const string & label1 = _label_bag.Str(j);
 	const string & label2 = _label_bag.Str(k);
 	const int l1 = _featurename_bag.Put("->\t" + label1 + "\t->\t" + label2);
-	const int id = _fb.Id(ME_Feature(i, l1));
+	const int id = _fb.getId(ME_Feature(i, l1));
 	if (id < 0) {
-	  _fb.Put(ME_Feature(i, l1));
+	  _fb.put(ME_Feature(i, l1));
 	  _vl.push_back(0);
 	}
       }
     }
   }
   if (USE_EDGE_TRIGRAMS) {
-    for (int i = 0; i < _label_bag.Size(); i++) {
-      for (int j = 0; j < _label_bag.Size(); j++) {
-        for (int k = 0; k < _label_bag.Size(); k++) {
-	  for (int l = 0; l < _label_bag.Size(); l++) {
+    for (int i = 0; i < _label_bag.size(); i++) {
+      for (int j = 0; j < _label_bag.size(); j++) {
+        for (int k = 0; k < _label_bag.size(); k++) {
+	  for (int l = 0; l < _label_bag.size(); l++) {
 	    const string & label1 = _label_bag.Str(j);
 	    const string & label2 = _label_bag.Str(k);
 	    const string & label3 = _label_bag.Str(l);
 	    const int l1 = _featurename_bag.Put("->\t" + label1 + "\t->\t" + label2 + "\t->\t" + label3);
-	    const int id = _fb.Id(ME_Feature(i, l1));
+	    const int id = _fb.getId(ME_Feature(i, l1));
 	    if (id < 0) {
-	      _fb.Put(ME_Feature(i, l1));
+	      _fb.put(ME_Feature(i, l1));
 	      _vl.push_back(0);
 	    }
 	  }
@@ -330,7 +330,7 @@ CRF_Model::load_from_file(const string & filename, bool verbose)
   }
 
 
-  _num_classes = _label_bag.Size() - 2;
+  _num_classes = _label_bag.size() - 2;
 
   init_feature2mef();
   initialize_edge_weights();
@@ -354,26 +354,26 @@ CRF_Model::init_feature2mef()
   for (size_t i = 0; i < _featurename_bag.Size(); i++) {
     vector<int> vi;
     for (size_t k = 0; k < (size_t) _num_classes; k++) {
-      int id = _fb.Id(ME_Feature((int)k, (int)i));
+      int id = _fb.getId(ME_Feature((int)k, (int)i));
       if (id >= 0) vi.push_back(id);
     }
     _feature2mef.push_back(vi);
   }
 #if 1
-    for (int i = 0; i < _label_bag.Size(); i++)
+    for (int i = 0; i < _label_bag.size(); i++)
     {
-        for (int j = 0; j < _label_bag.Size(); j++)
+        for (int j = 0; j < _label_bag.size(); j++)
         {
             const string & label1 = _label_bag.Str(j);
             const int l1 = _featurename_bag.Put("->\t" + label1);
-            const int id = _fb.Put(ME_Feature(i, l1));
+            const int id = _fb.put(ME_Feature(i, l1));
             edge_feature_id(i, j) = id;
 
-            for (int k = 0; k < _label_bag.Size(); k++)
+            for (int k = 0; k < _label_bag.size(); k++)
             {
                 const string & label2 = _label_bag.Str(k);
                 const int l2 = _featurename_bag.Put("->\t" + label1 + "\t->\t" + label2);
-                const int id = _fb.Put(ME_Feature(i, l2));
+                const int id = _fb.put(ME_Feature(i, l2));
                 edge_feature_id2(i, j, k) = id;
             }
 
@@ -402,15 +402,15 @@ CRF_Model::init_feature2mef()
   }
 #endif
   if (USE_EDGE_TRIGRAMS) {
-    for (int i = 0; i < _label_bag.Size(); i++) {
-      for (int j = 0; j < _label_bag.Size(); j++) {
-	for (int k = 0; k < _label_bag.Size(); k++) {
-	  for (int l = 0; l < _label_bag.Size(); l++) {
+    for (int i = 0; i < _label_bag.size(); i++) {
+      for (int j = 0; j < _label_bag.size(); j++) {
+	for (int k = 0; k < _label_bag.size(); k++) {
+	  for (int l = 0; l < _label_bag.size(); l++) {
 	    const string & label1 = _label_bag.Str(j);
 	    const string & label2 = _label_bag.Str(k);
 	    const string & label3 = _label_bag.Str(l);
 	    const int l1 = _featurename_bag.Put("->\t" + label1 + "\t->\t" + label2 + "\t->\t" + label3);
-	    const int id = _fb.Put(ME_Feature(i, l1));
+	    const int id = _fb.put(ME_Feature(i, l1));
 	    edge_feature_id3(i, j, k, l) = id;
 	  }
 	}
@@ -431,10 +431,10 @@ CRF_Model::save_to_file(const string & filename, const double th) const
   //  for (MiniStringBag::map_type::const_iterator i = _featurename_bag.begin();
   for (StrDic::const_Iterator i = _featurename_bag.begin();
        i != _featurename_bag.end(); i++) {
-    for (int j = 0; j < _label_bag.Size(); j++) {
+    for (int j = 0; j < _label_bag.size(); j++) {
       string label = _label_bag.Str(j);
       string history = i.getStr();
-      int id = _fb.Id(ME_Feature(j, i.getId()));
+      int id = _fb.getId(ME_Feature(j, i.getId()));
       if (id < 0) continue;
       if (_vl[id] == 0) continue; // ignore zero-weight features
       if (abs(_vl[id]) < th) continue; // cut off low-weight features

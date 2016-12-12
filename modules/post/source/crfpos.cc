@@ -40,10 +40,10 @@ normalize(const string & s)
     for (size_t i = 0; i < tmp.size(); i++)
     {
         if (tmp[i] >= 65 && tmp[i] <= 90)
-          tmp[i] += 32;
+          tmp[i] = (char) (tmp[i] + 32);
         else
         if (tmp[i] >= 192 && tmp[i] <= 221)
-          tmp[i] += 32;
+          tmp[i] = (char) (tmp[i] + 32);
         else
         if (isdigit(tmp[i])) tmp[i] = '#';
     }
@@ -254,7 +254,7 @@ void Trainer::train(
     {
       CRF_State state;
       state.label = s[j].pos;
-      featureCallback(s, j, state);
+      featureCallback(s, (int)j, state);
       cs.add_state(state);
     }
     model.add_training_sample(cs);

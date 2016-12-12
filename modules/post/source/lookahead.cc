@@ -38,12 +38,12 @@ void CRF_Model::lookahead_initialize_state_weights(const Sequence & seq)
     for (vector<int>::const_iterator j = s.positive_features.begin(); j != s.positive_features.end(); j++){
       for (vector<int>::const_iterator k = _feature2mef[*j].begin(); k != _feature2mef[*j].end(); k++) {
 	const double w = _vl[*k];
-	powv[_fb.Feature(*k).label()] += w;
+	powv[_fb.getFeature(*k).label()] += w;
       }
     }
 
     for (int j = 0; j < _num_classes; j++) {
-      state_weight(i, j) = powv[j];
+      state_weight((int)i, j) = powv[j];
     }
   }
 }
@@ -146,7 +146,7 @@ void CRF_Model::calc_diff(const double val,
   const Sample & s = seq.vs[start + depth];
   for (vector<int>::const_iterator j = s.positive_features.begin(); j != s.positive_features.end(); j++){
     for (vector<int>::const_iterator k = _feature2mef[*j].begin(); k != _feature2mef[*j].end(); k++) {
-      if (_fb.Feature(*k).label() == label)
+      if (_fb.getFeature(*k).label() == label)
 	diff[*k] += val;
     }
   }
@@ -162,13 +162,13 @@ int CRF_Model::update_weights_sub2(const Sequence & seq,
 {
   // gold-standard sequence
   vector<int> gold_seq;
-  const double gold_score = lookahead_search(seq, history, x, lookaheadDepth, 0, 0, gold_seq, true);
+  /*const double gold_score =*/ lookahead_search(seq, history, x, lookaheadDepth, 0, 0, gold_seq, true);
 
   //    cout << "gold = " << gold << " score = " << gold_score << endl;
   //        print_bestsq(gold_seq);
 
   vector<int> best_seq;
-  const double score = lookahead_search(seq, history, x, lookaheadDepth, 0, 0, best_seq, false, &gold_seq);
+  /*const double score =*/ lookahead_search(seq, history, x, lookaheadDepth, 0, 0, best_seq, false, &gold_seq);
 
   //       print_bestsq(best_seq);
 
@@ -196,7 +196,7 @@ int CRF_Model::lookaheadtrain_sentence(const Sequence & seq, int & t, vector<dou
   //    lookahead_initialize_edge_weights();  // to be removed
   lookahead_initialize_state_weights(seq);
 
-  const int len = seq.vs.size();
+  const int len = (int) seq.vs.size();
 
   vector<int> history(len + HV_OFFSET, -1);
   fill(history.begin(), history.begin() + HV_OFFSET, _num_classes); // BOS
@@ -238,7 +238,7 @@ CRF_Model::heldout_lookahead_error()
     }
 
   }
-  _heldout_error = (double)nerrors / total_len;
+  _heldout_error = (double)nerrors / (double)total_len;
 
   return 0;
 }
@@ -251,7 +251,7 @@ CRF_Model::perform_LookaheadTraining()
   cerr << "perceptron margin = " << PERCEPTRON_MARGIN << endl;
   cerr << "perceptron niter = " << PERCEPTRON_NITER << endl;
 
-  const int dim = _fb.Size();
+  const int dim = _fb.size();
 
   vector<double> wa(dim, 0);
 
@@ -323,7 +323,7 @@ int CRF_Model::decode_lookahead_sentence(
   for (int x = 0; x < len; x++) {
 
     vector<int> bestsq;
-    const double score = lookahead_search(seq, history, x, lookaheadDepth, 0, 0, bestsq);
+    /*const double score =*/ lookahead_search(seq, history, x, lookaheadDepth, 0, 0, bestsq);
 
     vs[x] = bestsq.front();
     history[HV_OFFSET + x] = vs[x];
@@ -335,14 +335,14 @@ int CRF_Model::decode_lookahead_sentence(
 
 void CRF_Model::decode_lookahead(CRF_Sequence & s0)
 {
-  if (s0.vs.size() >= MAX_LEN) {
+  if (s0.size() >= MAX_LEN) {
     cerr << "error: sequence is too long." << endl;
     return;
   }
 
   Sequence seq;
 
-  for (vector<CRF_State>::const_iterator i = s0.vs.begin(); i != s0.vs.end(); i++) {
+  for (CRF_Sequence::const_iterator i = s0.begin(); i != s0.end(); i++) {
     Sample s;
     for (vector<string>::const_iterator j = i->features.begin(); j != i->features.end(); j++) {
       const int id = _featurename_bag.Id(*j);
@@ -355,6 +355,6 @@ void CRF_Model::decode_lookahead(CRF_Sequence & s0)
   decode_lookahead_sentence(seq, vs);
 
   for (size_t i = 0; i < seq.vs.size(); i++) {
-    s0.vs[i].label = _label_bag.Str(vs[i]);
+    s0[i].label = _label_bag.Str(vs[i]);
   }
 }

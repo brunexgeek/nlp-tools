@@ -14,6 +14,7 @@
 #include <string>
 #include <cassert>
 #include <cstdio>
+#include <stdint.h>
 #include <post/strdic.hh>
 #include <post/common.hh>
 
@@ -32,32 +33,263 @@
 //
 struct CRF_State
 {
-public:
-  CRF_State() : label("") {};
-  CRF_State(const std::string & l) : label(l) {};
-  void set_label(const std::string & l) { label = l; }
+    public:
+        CRF_State() : label("") {};
+        CRF_State(const std::string & l) : label(l) {};
+        void set_label(const std::string & l) { label = l; }
 
-  // to add a binary feature
-  void add_feature(const std::string & f) {
-    if (f.find_first_of('\t') != std::string::npos) { std::cerr << "error: illegal characters in a feature string" << std::endl; exit(1); }
-    features.push_back(f);
-  }
+        // to add a binary feature
+        void add_feature(const std::string & f)
+        {
+            if (f.find_first_of('\t') != std::string::npos)
+            {
+                std::cerr << "error: illegal characters in a feature string" << std::endl;
+                exit(1);
+            }
+            features.push_back(f);
+        }
 
-public:
-  std::string label;
-  std::vector<std::string> features;
+    public:
+        std::string label;
+        std::vector<std::string> features;
 };
 
 
 struct CRF_Sequence
 {
-public:
-  void add_state(const CRF_State & s) {
-    vs.push_back(s);
-  }
-public:
-  std::vector<CRF_State> vs;
+    public:
+        typedef std::vector<CRF_State>::iterator iterator;
+        typedef std::vector<CRF_State>::const_iterator const_iterator;
+
+        void add_state(
+            const CRF_State & state )
+        {
+            content.push_back(state);
+        }
+
+
+        CRF_State &operator [](
+            size_t index )
+        {
+            return content[index];
+        }
+
+        const CRF_State &operator [](
+            size_t index ) const
+        {
+            return content[index];
+        }
+
+        size_t size() const
+        {
+            return content.size();
+        }
+
+        void push_back(
+            const CRF_State &item )
+        {
+            content.push_back(item);
+        }
+
+        void pop_back()
+        {
+            content.pop_back();
+        }
+
+        iterator begin()
+        {
+            return content.begin();
+        }
+
+        iterator end()
+        {
+            return content.end();
+        }
+
+        const_iterator begin() const
+        {
+            return content.begin();
+        }
+
+        const_iterator end() const
+        {
+            return content.end();
+        }
+
+    private:
+        std::vector<CRF_State> content;
 };
+
+
+typedef uint32_t mefeature_type;
+
+class ME_Feature
+{
+    public:
+        ME_Feature(
+            const int label,
+            const int feature )
+        {
+            content = (feature << 8) + (label & 0xff);
+        }
+
+        int label() const
+        {
+            return content & 0xff;
+        }
+
+        int feature() const
+        {
+            return content >> 8;
+        }
+
+        mefeature_type body() const
+        {
+            return content;
+        }
+
+    private:
+        mefeature_type content;
+};
+
+
+
+struct ME_FeatureBag
+{
+    #ifdef USE_HASH_MAP
+    //    typedef __gnu_cxx::hash_map<mefeature_type, int> map_type;
+    typedef std::tr1::unordered_map<mefeature_type, int> map_type;
+    #else
+    typedef std::map<mefeature_type, int> map_type;
+    #endif
+    map_type mef2id;
+    std::vector<ME_Feature> id2mef;
+
+    int put(const ME_Feature & i)
+    {
+        map_type::const_iterator j = mef2id.find(i.body());
+        if (j == mef2id.end())
+        {
+            const int id = (int) id2mef.size();
+            id2mef.push_back(i);
+            mef2id[i.body()] = id;
+            return id;
+        }
+        return j->second;
+    }
+
+    int getId(
+        const ME_Feature &code ) const
+    {
+        map_type::const_iterator j = mef2id.find(code.body());
+        if (j == mef2id.end()) return -1;
+        return j->second;
+    }
+
+    ME_Feature getFeature(
+        int id ) const
+    {
+        assert(id >= 0 && id < (int)id2mef.size());
+        return id2mef[id];
+    }
+
+    int size() const
+    {
+        return (int) id2mef.size();
+    }
+
+    void clear()
+    {
+        mef2id.clear();
+        id2mef.clear();
+    }
+};
+
+
+class MiniStringBag
+{
+    public:
+        #ifdef USE_HASH_MAP
+        typedef std::tr1::unordered_map<std::string, int> map_type;
+        #else
+        typedef std::map<std::string, int> map_type;
+        #endif
+
+        MiniStringBag() : _size(0) {}
+
+        int Put(const std::string & i)
+        {
+            map_type::const_iterator j = str2id.find(i);
+            if (j == str2id.end())
+            {
+                int id = _size;
+                _size++;
+                str2id[i] = id;
+                return id;
+            }
+            return j->second;
+        }
+
+        int Id(const std::string & i) const
+        {
+            map_type::const_iterator j = str2id.find(i);
+            if (j == str2id.end())  return -1;
+            return j->second;
+        }
+
+        int size() const
+        {
+            return _size;
+        }
+
+        void clear()
+        {
+            str2id.clear(); _size = 0;
+        }
+
+        map_type::const_iterator begin() const { return str2id.begin(); }
+        map_type::const_iterator end()   const { return str2id.end(); }
+
+    protected:
+        int _size;
+        map_type str2id;
+};
+
+struct StringBag : public MiniStringBag
+{
+    std::vector<std::string> id2str;
+
+    int Put(const std::string & i)
+    {
+        map_type::const_iterator j = str2id.find(i);
+        if (j == str2id.end())
+        {
+            int id = (int) id2str.size();
+            id2str.push_back(i);
+            str2id[i] = id;
+            return id;
+        }
+        return j->second;
+    }
+
+    std::string Str(const int id) const
+    {
+        assert(id >= 0 && id < (int)id2str.size());
+        return id2str[id];
+    }
+
+    int size() const
+    {
+        return (int) id2str.size();
+    }
+
+    void clear()
+    {
+        str2id.clear();
+        id2str.clear();
+    }
+};
+
 
 class CRF_Model
 {
@@ -67,11 +299,7 @@ class CRF_Model
 
   void add_training_sample(const CRF_Sequence & s);
   int train(const int cutoff = 0, const double sigma = 0, const double widthfactor = 0);
-  //  std::vector<double> classify(CRF_State & s) const;
-  void decode_forward_backward(CRF_Sequence & s, std::vector<std::map<std::string, double> > & tagp);
-  void decode_viterbi(CRF_Sequence & s);
-  void decode_nbest(CRF_Sequence & s0, std::vector<std::pair<double, std::vector<std::string> > > & nbest, const int num, const double min_prob);
-  void decode_lookahead(CRF_Sequence & s0);
+    void decode_lookahead(CRF_Sequence & s0);
   bool load_from_file(const std::string & filename, bool verbose = true);
   bool save_to_file(const std::string & filename, const double t = 0) const;
   int num_classes() const { return _num_classes; }
@@ -101,177 +329,6 @@ private:
     std::vector<Sample> vs;
   };
 
-#ifdef USE_MANY_LABELS
-  typedef unsigned long mefeature_type;
-
-  struct ME_Feature
-  {
-    ME_Feature(const int l, const int f) : _label(l), _feature(f) {};
-    int label()   const { return _label; }
-    int feature() const { return _feature; }
-    //    mefeature_type body() const { return (((long)_feature) << 32) + _label; }
-    mefeature_type body() const {
-      unsigned long a = _feature;
-      return (a << 32) + _label;
-    }
-  private:
-    int _label;
-    int _feature;
-  };
-#else
-  typedef unsigned int mefeature_type;
-
-  struct ME_Feature
-  {
-    ME_Feature(const int l, const int f) : _body((f << 8) + l) {
-      assert(l >= 0 && l <= MAX_LABEL_TYPES);
-      assert(f >= 0 && f <= 0xffffff);
-    };
-    int label()   const { return _body & 0xff; }
-    int feature() const { return _body >> 8; }
-    mefeature_type body() const { return _body; }
-  private:
-    mefeature_type _body;
-  };
-#endif
-
-  struct ME_FeatureBag
-  {
-#ifdef USE_HASH_MAP
-    //    typedef __gnu_cxx::hash_map<mefeature_type, int> map_type;
-    typedef std::tr1::unordered_map<mefeature_type, int> map_type;
-#else
-    typedef std::map<mefeature_type, int> map_type;
-#endif
-    map_type mef2id;
-    std::vector<ME_Feature> id2mef;
-    int Put(const ME_Feature & i) {
-      map_type::const_iterator j = mef2id.find(i.body());
-      if (j == mef2id.end()) {
-        const int id = (int) id2mef.size();
-        id2mef.push_back(i);
-        mef2id[i.body()] = id;
-        return id;
-      }
-      return j->second;
-    }
-    int Id(const ME_Feature & i) const {
-      map_type::const_iterator j = mef2id.find(i.body());
-      if (j == mef2id.end()) {
-        return -1;
-      }
-      return j->second;
-    }
-    ME_Feature Feature(int id) const {
-      assert(id >= 0 && id < (int)id2mef.size());
-      return id2mef[id];
-    }
-    int Size() const {
-      return (int) id2mef.size();
-    }
-    void Clear() {
-      mef2id.clear();
-      id2mef.clear();
-    }
-  };
-
-  struct hashfun_str
-  {
-    size_t operator()(const std::string& s) const {
-      assert(sizeof(int) == 4 && sizeof(char) == 1);
-      const int* p = reinterpret_cast<const int*>(s.c_str());
-      size_t v = 0;
-      int n = (int) s.size() / 4;
-      for (int i = 0; i < n; i++, p++) {
-        //      v ^= *p;
-	v ^= *p << (4 * (i % 2)); // note) 0 <= char < 128  // bug??
-	//        v ^= *p << (i % 2);
-      }
-      int m = s.size() % 4;
-      for (int i = 0; i < m; i++) {
-        v ^= s[4 * n + i] << (i * 8);
-      }
-      return v;
-    }
-  };
-
-  struct MiniStringBag
-  {
-#ifdef USE_HASH_MAP
-    //    typedef __gnu_cxx::hash_map<std::string, int, hashfun_str> map_type;
-    typedef std::tr1::unordered_map<std::string, int, hashfun_str> map_type;
-#else
-    typedef std::map<std::string, int> map_type;
-#endif
-    int _size;
-    map_type str2id;
-    MiniStringBag() : _size(0) {}
-    int Put(const std::string & i) {
-      map_type::const_iterator j = str2id.find(i);
-      if (j == str2id.end()) {
-        int id = _size;
-        _size++;
-        str2id[i] = id;
-        return id;
-      }
-      return j->second;
-    }
-    int Id(const std::string & i) const {
-      map_type::const_iterator j = str2id.find(i);
-      if (j == str2id.end())  return -1;
-      return j->second;
-    }
-    int Size() const { return _size; }
-    void Clear() { str2id.clear(); _size = 0; }
-    map_type::const_iterator begin() const { return str2id.begin(); }
-    map_type::const_iterator end()   const { return str2id.end(); }
-  };
-
-  struct StringBag : public MiniStringBag
-  {
-    std::vector<std::string> id2str;
-    int Put(const std::string & i) {
-      map_type::const_iterator j = str2id.find(i);
-      if (j == str2id.end()) {
-        int id = (int) id2str.size();
-        id2str.push_back(i);
-        str2id[i] = id;
-        return id;
-      }
-      return j->second;
-    }
-    std::string Str(const int id) const {
-      assert(id >= 0 && id < (int)id2str.size());
-      return id2str[id];
-    }
-    int Size() const { return (int) id2str.size(); }
-    void Clear() {
-      str2id.clear();
-      id2str.clear();
-    }
-  };
-
-  struct Path
-  {
-    double score;
-    double new_score;
-    std::vector<int> vs;
-    Path(const double s, const std::vector<int> & v) : score(s), vs(v) {};
-    bool operator<(const Path & p) const {
-      return score > p.score;
-    }
-    std::string str() const {
-      char buf[100];
-      sprintf(buf, "%f\t", score);
-      std::string s(buf);
-      for (std::vector<int>::const_iterator i = vs.begin(); i != vs.end(); i++) {
-        char buf[100];
-        sprintf(buf, "%d ", *i);
-        s += std::string(buf);
-      }
-      return s;
-    }
-  };
 
   std::vector<Sequence> _vs; // vector of training_samples
   StringBag _label_bag;
@@ -344,8 +401,6 @@ private:
   double calc_loglikelihood(const Sequence & seq);
   //  std::vector<double> calc_state_weight(const Sequence & seq, const int i) const;
   std::vector<double> calc_state_weight(const int i) const;
-  void nbest_search(const double lb, const int len, const int x, const int y, const double rhs_score, std::vector<Path> & vp);
-  double nbest(const Sequence & seq, std::vector<Path> & sequences, const int max_num, const double min_prob);
 
   double FunctionGradient(const std::vector<double> & x, std::vector<double> & grad);
   static double FunctionGradientWrapper(const std::vector<double> & x, std::vector<double> & grad);
@@ -353,14 +408,7 @@ private:
   int _line_counter; // for error message. Incremented at forward_backward
 
   int nbest_search_path[CRF_Model::MAX_LEN];
-  /*
-  static int edge_feature_id[CRF_Model::MAX_LABEL_TYPES][CRF_Model::MAX_LABEL_TYPES];
-  static double state_weight[MAX_LEN][CRF_Model::MAX_LABEL_TYPES];
-  static double edge_weight[CRF_Model::MAX_LABEL_TYPES][CRF_Model::MAX_LABEL_TYPES];
-  static double forward_cache[MAX_LEN][CRF_Model::MAX_LABEL_TYPES];
-  static double backward_cache[MAX_LEN][CRF_Model::MAX_LABEL_TYPES];
-  static int backward_pointer[MAX_LEN][CRF_Model::MAX_LABEL_TYPES];
-  */
+
   int *p_edge_feature_id;
   int *p_edge_feature_id2;
   int *p_edge_feature_id3;
@@ -404,13 +452,8 @@ private:
     { return p_backward_pointer[x * MAX_LABEL_TYPES + l]; }
 
 
-  double forward_prob(const int len);
-  double backward_prob(const int len);
-
 };
 
-
-class Token;
 
 
 typedef void FeatureCallback(
