@@ -21,7 +21,7 @@ public:
   //  enum { LOAD_FACTOR = 4 };  // a bit slower, but more memory efficient.
 
   StrDic(const int n = 1) {
-    Clear(n);
+    clear(n);
   }
   ~StrDic() {
     for (size_t i = 0; i < _v.size(); i++) free(_v[i]);
@@ -40,7 +40,7 @@ public:
     }
     return -1;
   }
-  void Clear(const int n = 1) {
+  void clear(const int n = 1) {
     for (size_t i = 0; i < _v.size(); i++) free(_v[i]);
     _v.resize(n);
     for (size_t i = 0; i < _v.size(); i++) _v[i] = NULL;
@@ -48,7 +48,7 @@ public:
     _min_idx = _v.size();
     _max_idx = 0;
   }
-  size_t Size() const {
+  size_t size() const {
     return _num_terms;
   }
 

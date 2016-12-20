@@ -14,6 +14,7 @@
 #include <post/common.hh>
 
 using namespace std;
+using namespace nlptools::postagger;
 
 set<string> known_words;
 

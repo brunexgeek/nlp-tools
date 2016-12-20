@@ -2,7 +2,7 @@
 #define NLPTOOLS_POST_TRAINER_HH
 
 
-#include <post/crf.hh>
+#include <post/Model.hh>
 #include <post/common.hh>
 #include <vector>
 
@@ -23,11 +23,11 @@ class Trainer
 			double gaussian,
 			const bool use_l1 = false );
 
-		CRF_Model &getModel();
+		Model &getModel();
 
 	private:
 		FeatureCallback *featureCallback;
-		CRF_Model model;
+		Model model;
 };
 
 

@@ -2,12 +2,16 @@
  * $Id$
  */
 
-#ifndef __POSTAGGER_COMMON_H_
-#define __POSTAGGER_COMMON_H_
+#ifndef NLPTOOLS_POST_COMMON_HH
+#define NLPTOOLS_POST_COMMON_HH
 
 #include <string>
 #include <vector>
 #include <map>
+
+namespace nlptools {
+namespace postagger {
+
 
 struct Token
 {
@@ -125,8 +129,7 @@ public:
 };
 
 
-#endif
+}}
 
-/*
- * $Log$
- */
+
+#endif // NLPTOOLS_POST_COMMON_HH

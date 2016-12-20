@@ -3,11 +3,14 @@
  */
 
 
-#include <post/crf.hh>
+#include <post/Model.hh>
 #include <vector>
 #include <cmath>
 #include <cfloat>
 #include <map>
+
+#include "Feature.hh"
+#include "StringBag.hh"
 
 using namespace std;
 
@@ -28,8 +31,11 @@ const double PERCEPTRON_MARGIN = 40;
 
 const static int HV_OFFSET = 3; // Should be equals to the maximum lookahead depth possible
 
+namespace nlptools {
+namespace postagger {
 
-void CRF_Model::lookahead_initialize_state_weights(const Sequence & seq)
+
+void Model::lookahead_initialize_state_weights(const Sequence & seq)
 {
   vector<double> powv(_num_classes);
   for (size_t i = 0; i < seq.vs.size(); i++) {
@@ -48,7 +54,7 @@ void CRF_Model::lookahead_initialize_state_weights(const Sequence & seq)
   }
 }
 
-double CRF_Model::lookahead_search(const Sequence & seq,
+double Model::lookahead_search(const Sequence & seq,
 				   vector<int> & history,
 				   const int start,
 				   const int max_depth,  const int depth,
@@ -114,7 +120,7 @@ double CRF_Model::lookahead_search(const Sequence & seq,
   return m;
 }
 
-void CRF_Model::calc_diff(const double val,
+void Model::calc_diff(const double val,
 			  const Sequence & seq,
 			  const int start,
 			  const vector<int> & history,
@@ -155,7 +161,7 @@ void CRF_Model::calc_diff(const double val,
 }
 
 
-int CRF_Model::update_weights_sub2(const Sequence & seq,
+int Model::update_weights_sub2(const Sequence & seq,
 				   vector<int> & history,
 				   const int x,
 				   map<int, double> & diff)
@@ -191,7 +197,7 @@ int CRF_Model::update_weights_sub2(const Sequence & seq,
 }
 
 
-int CRF_Model::lookaheadtrain_sentence(const Sequence & seq, int & t, vector<double> & wa)
+int Model::lookaheadtrain_sentence(const Sequence & seq, int & t, vector<double> & wa)
 {
   //    lookahead_initialize_edge_weights();  // to be removed
   lookahead_initialize_state_weights(seq);
@@ -222,7 +228,7 @@ int CRF_Model::lookaheadtrain_sentence(const Sequence & seq, int & t, vector<dou
 }
 
 double
-CRF_Model::heldout_lookahead_error()
+Model::heldout_lookahead_error()
 {
   size_t nerrors = 0, total_len = 0;
 
@@ -245,7 +251,7 @@ CRF_Model::heldout_lookahead_error()
 
 
 int
-CRF_Model::perform_LookaheadTraining()
+Model::perform_LookaheadTraining()
 {
   cerr << "lookahead depth = " << lookaheadDepth << endl;
   cerr << "perceptron margin = " << PERCEPTRON_MARGIN << endl;
@@ -308,7 +314,7 @@ CRF_Model::perform_LookaheadTraining()
 }
 
 
-int CRF_Model::decode_lookahead_sentence(
+int Model::decode_lookahead_sentence(
     const Sequence & seq,
     vector<int> & vs )
 {
@@ -333,7 +339,7 @@ int CRF_Model::decode_lookahead_sentence(
 }
 
 
-void CRF_Model::decode_lookahead(CRF_Sequence & s0)
+void Model::decode_lookahead(CRF_Sequence & s0)
 {
   if (s0.size() >= MAX_LEN) {
     cerr << "error: sequence is too long." << endl;
@@ -358,3 +364,6 @@ void CRF_Model::decode_lookahead(CRF_Sequence & s0)
     s0[i].label = _label_bag.Str(vs[i]);
   }
 }
+
+
+}}

@@ -1,7 +1,3 @@
-/*
- * $Id$
- */
-
 #include <stdio.h>
 #include <fstream>
 #include <map>
@@ -11,27 +7,25 @@
 #include <iostream>
 #include <cfloat>
 #include <sstream>
-//#include "maxent.h"
 #include <post/Predictor.hh>
 #include <sys/time.h>
 
 using namespace std;
+using namespace nlptools::postagger;
 
 bool PERFORM_TOKENIZATION = false;
 bool OUTPUT_TAG_PROBS = false;
 bool STANDOFF = false;
 bool UIMA     = false;
 bool ENJU     = false;
-int  NBEST = 0;
 
-string MODEL_DIR = "."; // the default directory for saving the models
 
-const double PROB_OUTPUT_THRESHOLD = 0.001; // suppress output of tags with a very low probability
+namespace nlptools {
+namespace postagger {
 
-void
-tokenize(const string & s, Sentence & vt, const bool use_upenn_tokenizer);
+void tokenize(const string & s, Sentence & vt, const bool use_upenn_tokenizer);
 
-void read_WordNet(const string & wordnetdir);
+}}
 
 
 ParenConverter paren_converter;
@@ -146,7 +140,7 @@ int main(int argc, char** argv)
 		is = &ifile;
 	}
 
-	CRF_Model crfm;
+	Model crfm;
 	if (crfm.load_from_file(modelFileName, false) == false)
 		main_error("Can not load the model at '" + modelFileName + "'");
 
@@ -182,7 +176,6 @@ int main(int argc, char** argv)
 
 		// tag the words
 		vector< map<string, double> > tagp;
-		//    crf_decode_forward_backward(vt, crfm, tagp0);
 		nlptools::postagger::Predictor predictor(crfm);
 		predictor.predict(vt, tagp);
 
@@ -245,16 +238,5 @@ int main(int argc, char** argv)
 			}
 		}
 		cout << endl;
-		crfm.incr_line_counter();
 	}
-
-	//  int msec = push_stop_watch();
-	//  cerr << "tagging time = " << msec << " msec" << endl;
-	//  cerr << 1000.0 * nlines / msec << " lines / sec" << endl;
-
 }
-
-/*
- * $Log$
- */
-

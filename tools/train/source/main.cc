@@ -16,12 +16,10 @@
 
 
 using namespace std;
+using namespace nlptools::postagger;
 
 
 //int eftrain(const vector<Sentence> & vs, const string & modeldir, const bool use_l1);
-int
-crftrain(const CRF_Model::OptimizationMethod method,
-	 CRF_Model & c, const vector<Sentence> & vs, double g, const bool use_l1);
 
 
 void read_tagged(istream * ifile, vector<Sentence> & vs)

@@ -12,7 +12,7 @@
 #include <cmath>
 #include <set>
 #include <post/Trainer.hh>
-#include <post/crf.hh>
+#include <post/Model.hh>
 #include <post/common.hh>
 
 using namespace std;
@@ -233,7 +233,7 @@ Trainer::~Trainer()
 }
 
 
-CRF_Model &Trainer::getModel()
+Model &Trainer::getModel()
 {
     return model;
 }

@@ -6,6 +6,9 @@
 #include <cstdlib>
 #include <post/common.hh>
 
+namespace nlptools {
+namespace postagger {
+
 using namespace std;
 
 static void
@@ -13,10 +16,10 @@ replace(string & s, const string & s1, const string & s2, const char skip = 0, b
 
 static void separate_commas(string & s)
 {
-  const int n = s.size();
+  const size_t n = s.size();
 
   string t;
-  for (int i = 0; i < n; i++) {
+  for (size_t i = 0; i < n; i++) {
     if (s[i] == ',') {
       if ( !(i > 0 && isdigit(s[i-1]) && i < n - 1 && isdigit(s[i+1]) ) ) {
 	t += " , ";
@@ -64,7 +67,7 @@ tokenize(const string & s1, vector<string> & lt)
   replace(s, "%", " % ");
   replace(s, "&", " & ");
 
-  int pos = s.size() - 1;
+  size_t pos = s.size() - 1;
   while (pos > 0 && s[pos] == ' ') pos--;
   while (pos > 0) {
     char c = s[pos];
@@ -180,25 +183,28 @@ tokenize(const string & s, Sentence & vt, const bool use_upenn_tokenizer)
     }
   }
 
-  int begin = 0;
+  size_t begin = 0;
   for (vector<string>::const_iterator i = vs.begin(); i != vs.end(); i++) {
     string::size_type x = s.find(*i, begin);
-    int strlen = i->size();
+    size_t length = i->size();
     if (*i == "''") {
       string::size_type y = s.find("\"", begin);
-      if (y != string::npos && (x == string::npos || y < x)) { x = y; strlen = 1; }
+      if (y != string::npos && (x == string::npos || y < x)) { x = y; length = 1; }
     }
     if (*i == "``") {
       string::size_type y = s.find("\"", begin);
-      if (y != string::npos && (x == string::npos || y < x)) { x = y; strlen = 1; }
+      if (y != string::npos && (x == string::npos || y < x)) { x = y; length = 1; }
     }
     if (x == string::npos) {
       cerr << "internal error: tokenization failed." << endl;
       cerr << "input = " << s << endl;
       exit(1);
     }
-    const int end = x + strlen;
+    const size_t end = x + length;
     vt.push_back(Token(*i, x, end));
     begin = end;
   }
 }
+
+
+}}
